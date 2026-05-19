@@ -71,11 +71,11 @@ step "Updating system packages..."
 dnf update -y -q
 ok "System updated"
 
-step "Installing EPEL and CRB repository plugins..."
+step "Installing EPEL and PowerTools/CRB repository plugins..."
 dnf install -y -q epel-release
 dnf config-manager --set-enabled crb 2>/dev/null || \
     dnf config-manager --set-enabled powertools 2>/dev/null || true
-ok "EPEL + CRB Repository channels enabled"
+ok "EPEL + CRB enabled"
 
 step "Installing packages (Fixed AppStream dependencies for AlmaLinux 9)..."
 dnf install -y -q \
@@ -186,7 +186,7 @@ cd /
 # ════════════════════════════════════════════════════════════════════════════
 banner "Step 4 — Native Squid Filter Configuration"
 
-step "Structuring /etc/squid/squid.conf (Bypassing broken squidGuard modules)"
+step "Structuring /etc/squid/squid.conf..."
 mkdir -p /var/lib/squid/db
 mkdir -p /etc/squid/whitelist
 touch /etc/squid/whitelist/domains.txt
@@ -390,12 +390,13 @@ chmod +x /usr/local/bin/cipa-report
 ok "Reporting binary linked to command environment."
 
 # ════════════════════════════════════════════════════════════════════════════
-# ACTIVATION
+# STEP 9 — ACTIVATION & SUMMARY
 # ════════════════════════════════════════════════════════════════════════════
-banner "Activating Protective Framework"
+banner "Step 9 — Activating Protective Framework"
 
-step "Executing initial synchronization loops..."
-/usr/local/bin/update-blocklists
+step "Executing initial blocklist sync loop in background..."
+/usr/local/bin/update-blocklists &
+ok "Blocklist synchronization task offloaded to background (PID $!)"
 
 step "Starting core processing daemon..."
 systemctl enable --now squid &>/dev/null
@@ -405,7 +406,7 @@ banner "HOME-FILTER01 Deployment Execution Complete"
 echo -e "
   ${GRN}Home Network Protection Active:${RST} http://$FILTER_IP
   ${GRN}Squid Inbound Mirror Ports:${RST}     $SQUID_PORT (HTTP) / $HTTPS_PORT (Interception Mode)
-  ${GRN}Enforcement Target Scope:${RST}       Home WiFi Scope Group ($HOME_NETWORK)
+  ${GRN}Enforcement Target Scope:${RST}       TEAMSMOWIFI Home Network Scope ($HOME_NETWORK)
 
   ${YLW}CRITICAL LOCAL CONFIGURATION STEPS REQUIRED:${RST}
   1. Install your certificate file located at:
